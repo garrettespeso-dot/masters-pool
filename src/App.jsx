@@ -121,10 +121,18 @@ export default function App() {
               const live = liveMap.get(normalizeName(player.name));
               if (!live) return player;
 
+              const reasonableScore =
+                typeof live.score === "number" &&
+                live.score >= -20 &&
+                live.score <= 20;
+
               return {
                 ...player,
-                score: typeof live.score === "number" ? live.score : player.score,
-                madeCut: typeof live.madeCut === "boolean" ? live.madeCut : player.madeCut
+                score: reasonableScore ? live.score : player.score,
+                madeCut:
+                  typeof live.madeCut === "boolean"
+                    ? live.madeCut
+                    : player.madeCut
               };
             })
           );
