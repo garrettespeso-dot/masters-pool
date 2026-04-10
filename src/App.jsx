@@ -248,21 +248,27 @@ export default function App() {
           borderLeft: isLeader ? "6px solid #f2c94c" : "none"
         }}
       >
-        <td
-          style={{
-            padding: 14,
-            borderBottom: "1px solid #e5e7eb",
-            fontWeight: 700,
-            display: "flex",
-            alignItems: "center",
-            gap: 8
-          }}
-        >
-          {idx === 0 && <span style={{ fontSize: 18 }}>🥇</span>}
-          {idx === 1 && <span style={{ fontSize: 18 }}>🥈</span>}
-          {idx === 2 && <span style={{ fontSize: 18 }}>🥉</span>}
-          #{idx + 1}
-        </td>
+     <td
+       style={{
+         padding: 14,
+         borderBottom: "1px solid #e5e7eb",
+         fontWeight: 700,
+         verticalAlign: "middle"
+       }}
+     >
+       <div
+         style={{
+         display: "flex",
+         alignItems: "center",
+         gap: 8
+       }}
+     >
+       {idx === 0 && <span style={{ fontSize: 18 }}>🥇</span>}
+       {idx === 1 && <span style={{ fontSize: 18 }}>🥈</span>}
+       {idx === 2 && <span style={{ fontSize: 18 }}>🥉</span>}
+       <span>#{idx + 1}</span>
+     </div>
+   </td>
 
         <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
           {entry.name}
