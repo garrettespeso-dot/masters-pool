@@ -22,7 +22,11 @@ function parseCsv(text) {
 
   if (!lines.length) return [];
 
-  const headers = lines[0].split(",").map((h) => h.trim());
+  const rawHeaders = lines[0].split(",").map((h) => h.trim());
+
+  const headers = rawHeaders.map((h) =>
+    h.replace(/^\uFEFF/, "").trim().toLowerCase()
+  );
 
   return lines.slice(1).map((line) => {
     const values = line.split(",").map((v) => v.trim());
@@ -59,13 +63,16 @@ export default async function handler(req, res) {
     const rows = parseCsv(csvText);
 
     const players = rows
-      .map((row) => ({
-        name: row.player || "",
-        normalizedName: normalizeName(row.player || ""),
-        score: parseScore(row.score),
-        madeCut: parseMadeCut(row.madeCut)
-      }))
-      .filter((row) => row.name);
+      .map((row) => {
+        const name = row.player || row.name || "";
+        return {
+          name,
+          normalizedName: normalizeName(name),
+          score: parseScore(row.score),
+          madeCut: parseMadeCut(row.madecut || row.madeCut)
+      };
+    })
+  .filter((row) => row.name);
 
     return res.status(200).json({
       ok: true,
