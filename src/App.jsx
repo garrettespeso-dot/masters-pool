@@ -135,7 +135,6 @@ export default function App() {
               : reasonableScore
                 ? true
                 : player.madeCut
-        };
               };
             })
           );
