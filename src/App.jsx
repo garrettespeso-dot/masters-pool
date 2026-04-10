@@ -291,9 +291,21 @@ export default function App() {
                       <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
                         #{idx + 1}
                       </td>
-                      <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
-                        {entry.name}
-                      </td>
+                      <td
+                        style={{
+                          padding: 14,
+                          borderBottom: "1px solid #e5e7eb",
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 8
+                        }}
+                       >
+                        {idx === 0 && <span style={{ fontSize: 18 }}>🥇</span>}
+                        {idx === 1 && <span style={{ fontSize: 18 }}>🥈</span>}
+                        {idx === 2 && <span style={{ fontSize: 18 }}>🥉</span>}
+                        #{idx + 1}
+                       </td>
                       <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
                         <span
                           style={{
