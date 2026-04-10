@@ -12,6 +12,36 @@ const DEFAULT_PARTICIPANTS = [
       "Bucket 4": ["Brooks Koepka", "Jordan Spieth"],
       "Bucket 5": ["Dustin Johnson", "Cameron Smith"]
     }
+  },
+  {
+    name: "Purtell",
+    picks: {
+      "Bucket 1": ["Rory McIlroy", "Cameron Young"],
+      "Bucket 2": ["Sungjae Im", "Justin Thomas"],
+      "Bucket 3": ["Akshay Bhatia", "Patrick Reed"],
+      "Bucket 4": ["Tom Kim", "Jordan Spieth"],
+      "Bucket 5": ["Jake Knapp", "Ryan Gerard"]
+    }
+  },
+  {
+    name: "Mark Chelli",
+    picks: {
+      "Bucket 1": ["Scottie Scheffler", "Xander Schauffele"],
+      "Bucket 2": ["Ludvig Aberg", "Hideki Matsuyama"],
+      "Bucket 3": ["Will Zalatoris", "Jason Day"],
+      "Bucket 4": ["Jordan Spieth", "Tom Kim"],
+      "Bucket 5": ["Ben Griffin", "Ryan Gerard"]
+    }
+  },
+  {
+    name: "Xavier",
+    picks: {
+      "Bucket 1": ["Scottie Scheffler", "Rory McIlroy"],
+      "Bucket 2": ["Collin Morikawa", "Justin Thomas"],
+      "Bucket 3": ["Adam Scott", "Patrick Reed"],
+      "Bucket 4": ["Jordan Spieth", "Tom Kim"],
+      "Bucket 5": ["Ryan Gerard", "Ben Griffin"]
+    }
   }
 ];
 
