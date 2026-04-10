@@ -278,60 +278,68 @@ export default function App() {
                 </tr>
               </thead>
               <tbody>
-                {leaderboard.map((entry, idx) => {
-                  const isLeader = idx === 0 && !entry.out;
-                  return (
-                    <tr
-                      key={entry.name}
-                      style={{
-                        background: isLeader ? "#d1fae5" : "white",
-                        borderLeft: isLeader ? "6px solid #f2c94c" : "none"
-                      }}
-                    >
-                      <td
-                        style={{
-                          padding: 14,
-                          borderBottom: "1px solid #e5e7eb",
-                          fontWeight: 700,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 8
-                        }}
-                       >
-                        {idx === 0 && <span style={{ fontSize: 18 }}>🥇</span>}
-                        {idx === 1 && <span style={{ fontSize: 18 }}>🥈</span>}
-                        {idx === 2 && <span style={{ fontSize: 18 }}>🥉</span>}
-                        #{idx + 1}
-                       </td>
+  {leaderboard.map((entry, idx) => {
+    const isLeader = idx === 0 && !entry.out;
 
-                      <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
-                        <span
-                          style={{
-                            display: "inline-block",
-                            padding: "6px 10px",
-                            borderRadius: 999,
-                            fontSize: 12,
-                            fontWeight: 700,
-                            background: entry.out ? "#fee2e2" : "#dcfce7",
-                            color: entry.out ? "#991b1b" : "#166534"
-                          }}
-                        >
-                          {entry.out ? "OUT" : "ACTIVE"}
-                        </span>
-                      </td>
-                      <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
-                        {entry.madeCutCount}
-                      </td>
-                      <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
-                        {entry.total ?? "—"}
-                      </td>
-                      <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
-                        {entry.tiebreak ?? "—"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
+    return (
+      <tr
+        key={entry.name}
+        style={{
+          background: isLeader ? "#d1fae5" : "white",
+          borderLeft: isLeader ? "6px solid #f2c94c" : "none"
+        }}
+      >
+        <td
+          style={{
+            padding: 14,
+            borderBottom: "1px solid #e5e7eb",
+            fontWeight: 700,
+            display: "flex",
+            alignItems: "center",
+            gap: 8
+          }}
+        >
+          {idx === 0 && <span style={{ fontSize: 18 }}>🥇</span>}
+          {idx === 1 && <span style={{ fontSize: 18 }}>🥈</span>}
+          {idx === 2 && <span style={{ fontSize: 18 }}>🥉</span>}
+          #{idx + 1}
+        </td>
+
+        <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
+          {entry.name}
+        </td>
+
+        <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
+          <span
+            style={{
+              display: "inline-block",
+              padding: "6px 10px",
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 700,
+              background: entry.out ? "#fdecea" : "#d1fae5",
+              color: entry.out ? "#b91c1c" : "#0b3d2e"
+            }}
+          >
+            {entry.out ? "OUT" : "ACTIVE"}
+          </span>
+        </td>
+
+        <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
+          {entry.madeCutCount}
+        </td>
+
+        <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
+          {entry.total ?? "—"}
+        </td>
+
+        <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
+          {entry.tiebreak ?? "—"}
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
             </table>
           </div>
         </div>
