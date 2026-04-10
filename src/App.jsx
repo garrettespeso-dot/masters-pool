@@ -200,7 +200,7 @@ export default function App() {
   return (
     <div
       style={{
-        background: "#f3f4f6",
+        background: "#e8f5e9",
         minHeight: "100vh",
         padding: 20,
         fontFamily: "Arial, sans-serif",
@@ -209,14 +209,14 @@ export default function App() {
     >
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 48, margin: "0 0 10px 0", fontWeight: 800 }}>
+          <h1 style={{ fontSize: 48, fontWeight: 800, color: "#0b3d2e" }}>
             Masters Pool
           </h1>
           <div
             style={{
               ...cardStyle(),
-              background: "#111827",
-              color: "white"
+            background: "#0b3d2e",
+            color: "#f2c94c"
             }}
           >
             <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
