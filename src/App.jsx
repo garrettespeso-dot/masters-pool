@@ -1,350 +1,153 @@
+import React, { useEffect, useMemo, useState } from "react";
 import { DEFAULT_PARTICIPANTS } from "./participants";
 
-import React, { useEffect, useMemo, useState } from "react";
-
-const BUCKETS = ["Bucket 1", "Bucket 2", "Bucket 3", "Bucket 4", "Bucket 5"];
+const BUCKETS = ["Bucket 1","Bucket 2","Bucket 3","Bucket 4","Bucket 5"];
 
 function normalizeName(name) {
   return String(name || "")
     .replace(/\(a\)/gi, "")
+    .replace(/\./g, "")
     .replace(/\s+/g, " ")
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .replace("jordon spieth","jordan spieth")
+    .replace("sungae im","sungjae im")
+    .replace("ludvig åberg","ludvig aberg")
+    .replace("nicolai højgaard","nicolai hojgaard")
+    .replace("j j spaun","jj spaun");
 }
 
-function normalizePoolName(name) {
-  return String(name || "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace("Jordon Spieth", "Jordan Spieth")
-    .replace("Sungae IM", "Sungjae Im")
-    .replace("Ludvig Åberg", "Ludvig Aberg")
-    .replace("Nicolai Højgaard", "Nicolai Hojgaard");
+function flattenPicks(picks) {
+  return BUCKETS.flatMap((b)=>picks[b]||[]);
 }
 
 const DEFAULT_PLAYERS = Array.from(
   new Map(
-    DEFAULT_PARTICIPANTS.flatMap((entry) =>
-      BUCKETS.flatMap((bucket) =>
-        (entry.picks[bucket] || []).map((name) => [
-          normalizePoolName(name),
-          {
-            name: normalizePoolName(name),
-            bucket,
-            score: 0,
-            madeCut: false
-          }
-        ])
-      )
+    DEFAULT_PARTICIPANTS.flatMap(entry =>
+      flattenPicks(entry.picks).map(name => [
+        normalizeName(name),
+        { name, score: 0, madeCut: false }
+      ])
     )
   ).values()
 );
 
-function flattenPicks(picks) {
-  return BUCKETS.flatMap((bucket) => picks[bucket] || []);
-}
-
 function computeEntry(entry, players) {
-  const playerMap = Object.fromEntries(players.map((p) => [p.name, p]));
+  const map = Object.fromEntries(players.map(p=>[normalizeName(p.name),p]));
+
   const selected = flattenPicks(entry.picks)
-    .map((name) => playerMap[normalizePoolName(name)])
+    .map(n=>map[normalizeName(n)])
     .filter(Boolean);
 
-  const madeCutPlayers = selected.filter((p) => p.madeCut);
-  const scores = madeCutPlayers
-    .map((p) => Number(p.score))
-    .filter((n) => !Number.isNaN(n))
-    .sort((a, b) => a - b);
+  const made = selected.filter(p=>p.madeCut);
 
-  const best5 = scores.slice(0, 5);
-  const total = best5.length === 5 ? best5.reduce((a, b) => a + b, 0) : null;
-  const tiebreak = scores.length >= 6 ? scores[5] : null;
+  const scores = made
+    .map(p=>Number(p.score))
+    .filter(n=>!Number.isNaN(n))
+    .sort((a,b)=>a-b);
+
+  const best5 = scores.slice(0,5);
+  const total = best5.length===5 ? best5.reduce((a,b)=>a+b,0) : null;
+  const tiebreak = scores.length>=6 ? scores[5] : null;
 
   return {
     ...entry,
-    madeCutCount: madeCutPlayers.length,
+    madeCutCount: made.length,
+    countedScores: best5,
     total,
     tiebreak,
-    out: madeCutPlayers.length < 5
-  };
-}
-
-function cardStyle() {
-  return {
-    background: "#ffffff",
-    borderRadius: 16,
-    padding: 20,
-    boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-    border: "1px solid #e5e7eb"
+    out: made.length<5
   };
 }
 
 export default function App() {
-  const [players, setPlayers] = useState(DEFAULT_PLAYERS);
-  const [participants] = useState(DEFAULT_PARTICIPANTS);
-  const [syncStatus, setSyncStatus] = useState("Waiting for first live update...");
-  const [lastUpdated, setLastUpdated] = useState("");
+  const [players,setPlayers]=useState(DEFAULT_PLAYERS);
+  const [status,setStatus]=useState("Loading...");
+  const [last,setLast]=useState("");
 
-  const leaderboard = useMemo(() => {
-    return participants
-      .map((p) => computeEntry(p, players))
-      .sort((a, b) => {
-        const aOut = a.out ? 1 : 0;
-        const bOut = b.out ? 1 : 0;
-        if (aOut !== bOut) return aOut - bOut;
-        if ((a.total ?? 9999) !== (b.total ?? 9999)) return (a.total ?? 9999) - (b.total ?? 9999);
-        return (a.tiebreak ?? 9999) - (b.tiebreak ?? 9999);
+  const leaderboard = useMemo(()=>{
+    return DEFAULT_PARTICIPANTS
+      .map(p=>computeEntry(p,players))
+      .sort((a,b)=>{
+        if(a.out!==b.out) return a.out?1:-1;
+        if((a.total??999)!==(b.total??999)) return (a.total??999)-(b.total??999);
+        return (a.tiebreak??999)-(b.tiebreak??999);
       });
-  }, [participants, players]);
+  },[players]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadLiveScores() {
-      try {
-        setSyncStatus("Refreshing live scores...");
+  useEffect(()=>{
+    async function load(){
+      try{
+        setStatus("Updating...");
         const res = await fetch("/api/leaderboard");
         const data = await res.json();
 
-        if (!res.ok || !data.ok) {
-          throw new Error(data.error || "Live score request failed");
-        }
+        const map = new Map(
+          data.players.map(p=>[normalizeName(p.name),p])
+        );
 
-        const liveMap = new Map();
-        for (const row of data.players || []) {
-          liveMap.set(normalizeName(row.name), row);
-        }
+        setPlayers(curr=>curr.map(p=>{
+          const live = map.get(normalizeName(p.name));
+          if(!live) return p;
 
-        if (!cancelled) {
-          setPlayers((current) =>
-            current.map((player) => {
-              const live = liveMap.get(normalizeName(player.name));
-              if (!live) return player;
+          const ok = typeof live.score==="number" && live.score>=-20 && live.score<=20;
 
-        const reasonableScore =
-          typeof live.score === "number" &&
-          live.score >= -20 &&
-          live.score <= 20;
+          return {
+            ...p,
+            score: ok ? live.score : p.score,
+            madeCut: ok ? true : p.madeCut
+          };
+        }));
 
-        return {
-          ...player,
-          score: reasonableScore ? live.score : player.score,
-          madeCut: reasonableScore ? true : player.madeCut
-         };
-            })
-          );
-
-          setLastUpdated(data.fetchedAt || new Date().toISOString());
-          setSyncStatus("Live scores synced");
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setSyncStatus(`Live sync failed: ${err.message}`);
-        }
+        setStatus("Live");
+        setLast(new Date().toLocaleTimeString());
+      }catch{
+        setStatus("Error");
       }
     }
 
-    loadLiveScores();
-    const id = setInterval(loadLiveScores, 60000);
-
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, []);
-
-  const updatePlayer = (name, field, value) => {
-    setPlayers((prev) =>
-      prev.map((p) => (p.name === name ? { ...p, [field]: value } : p))
-    );
-  };
-
-  const leaderName = leaderboard.find((p) => !p.out)?.name || "";
+    load();
+    const id=setInterval(load,60000);
+    return ()=>clearInterval(id);
+  },[]);
 
   return (
-    <div
-      style={{
-        background: "#e8f5e9",
-        minHeight: "100vh",
-        padding: 20,
-        fontFamily: "Arial, sans-serif",
-        color: "#111827"
-      }}
-    >
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <div style={{ marginBottom: 20 }}>
-          <h1 style={{ fontSize: 48, fontWeight: 800, color: "#0b3d2e" }}>
-            Masters Pool
-          </h1>
-          <div
-            style={{
-              ...cardStyle(),
-            background: "#0b3d2e",
-            color: "#f2c94c"
-            }}
-          >
-            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
-              Live Status
-            </div>
-            <div style={{ marginBottom: 6 }}>
-              <strong>Status:</strong> {syncStatus}
-            </div>
-            <div>
-              <strong>Last updated:</strong> {lastUpdated || "—"}
-            </div>
-          </div>
-        </div>
+    <div style={{padding:20,fontFamily:"Arial"}}>
+      <h1>Masters Pool</h1>
+      <div>Status: {status} | Last: {last}</div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 16,
-            marginBottom: 24
-          }}
-        >
-          <div style={cardStyle()}>
-            <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 6 }}>Leader</div>
-            <div style={{ fontSize: 28, fontWeight: 800 }}>{leaderName || "—"}</div>
-          </div>
+      <table style={{width:"100%",marginTop:20,borderCollapse:"collapse"}}>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Participant</th>
+            <th>Status</th>
+            <th>Cut</th>
+            <th>Total</th>
+            <th>6th</th>
+            <th>Scores</th>
+          </tr>
+        </thead>
 
-          <div style={cardStyle()}>
-            <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 6 }}>Entries</div>
-            <div style={{ fontSize: 28, fontWeight: 800 }}>{leaderboard.length}</div>
-          </div>
-
-          <div style={cardStyle()}>
-            <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 6 }}>Golfers Tracked</div>
-            <div style={{ fontSize: 28, fontWeight: 800 }}>{players.length}</div>
-          </div>
-        </div>
-
-        <div style={{ ...cardStyle(), marginBottom: 24 }}>
-  <h2 style={{ marginTop: 0, fontSize: 34 }}>Leaderboard</h2>
-  <div style={{ overflowX: "auto" }}>
-    <table style={{ width: "100%", borderCollapse: "collapse" }}>
-      <thead>
-        <tr style={{ background: "#f9fafb" }}>
-          {[
-            "Rank",
-            "Participant",
-            "Status",
-            "Made Cut",
-            "Best 5 Total",
-            "6th Score",
-            "Counting Scores"
-          ].map((header) => (
-            <th
-              key={header}
-              style={{
-                textAlign: "left",
-                padding: 14,
-                borderBottom: "1px solid #e5e7eb",
-                fontSize: 14,
-                color: "#6b7280"
-              }}
-            >
-              {header}
-            </th>
-          ))}
-        </tr>
-      </thead>
-
-      <tbody>
-        {leaderboard.map((entry, idx) => {
-          const isLeader = idx === 0 && !entry.out;
-
-          return (
-            <tr
-              key={entry.name}
-              style={{
-                background: isLeader ? "#d1fae5" : "white",
-                borderLeft: isLeader ? "6px solid #f2c94c" : "none"
-              }}
-            >
-              <td
-                style={{
-                  padding: 14,
-                  borderBottom: "1px solid #e5e7eb",
-                  fontWeight: 700,
-                  verticalAlign: "middle"
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8
-                  }}
-                >
-                  {idx === 0 && <span style={{ fontSize: 18 }}>🥇</span>}
-                  {idx === 1 && <span style={{ fontSize: 18 }}>🥈</span>}
-                  {idx === 2 && <span style={{ fontSize: 18 }}>🥉</span>}
-                  <span>#{idx + 1}</span>
-                </div>
-              </td>
-
-              <td
-                style={{
-                  padding: 14,
-                  borderBottom: "1px solid #e5e7eb",
-                  fontWeight: 700
-                }}
-              >
-                {isLeader && <span style={{ marginRight: 6 }}>👑</span>}
-                {entry.name}
-              </td>
-
-              <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
-                <span
-                  style={{
-                    display: "inline-block",
-                    padding: "6px 10px",
-                    borderRadius: 999,
-                    fontSize: 12,
-                    fontWeight: 700,
-                    background: entry.out ? "#fdecea" : "#d1fae5",
-                    color: entry.out ? "#b91c1c" : "#0b3d2e"
-                  }}
-                >
-                  {entry.out ? "OUT" : "ACTIVE"}
-                </span>
-              </td>
-
-              <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
-                {entry.madeCutCount}
-              </td>
-
-              <td
-                style={{
-                  padding: 14,
-                  borderBottom: "1px solid #e5e7eb",
-                  fontWeight: 700
-                }}
-              >
-                {entry.total ?? "—"}
-              </td>
-
-              <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
-                {entry.tiebreak ?? "—"}
-              </td>
-
-              <td
-                style={{
-                  padding: 14,
-                  borderBottom: "1px solid #e5e7eb",
-                  color: "#374151",
-                  fontSize: 14
-                }}
-              >
-                {entry.countedScores?.join(", ") || "—"}
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
-  </div>
-</div>
+        <tbody>
+          {leaderboard.map((e,i)=>{
+            const leader=i===0 && !e.out;
+            return (
+              <tr key={e.name} style={{background:leader?"#e8f5e9":"white"}}>
+                <td>
+                  {i===0?"🥇":i===1?"🥈":i===2?"🥉":""} #{i+1}
+                </td>
+                <td>{leader?"👑 ":""}{e.name}</td>
+                <td>{e.out?"OUT":"ACTIVE"}</td>
+                <td>{e.madeCutCount}</td>
+                <td>{e.total??"—"}</td>
+                <td>{e.tiebreak??"—"}</td>
+                <td>{e.countedScores?.join(", ")||"—"}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
