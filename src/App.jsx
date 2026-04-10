@@ -120,27 +120,26 @@ export default function App() {
         if (!cancelled) {
           setPlayers((current) =>
             current.map((player) => {
-              const live = liveMap.get(normalizeName(player.name));
-              if (!live) return player;
+             const live =
+               liveMap.get(normalizeName(player.name)) ||
+               liveMap.get(normalizeName(player.name).replace("jj spaun", "j j spaun"));
 
-              const reasonableScore =
-                typeof live.score === "number" &&
-                live.score >= -20 &&
-                live.score <= 20;
+             if (!live) return player;
 
-              return {
-                ...player,
-                score: reasonableScore ? live.score : player.score,
-                madeCut:
-                  typeof live.madeCut === "boolean"
-                    ? live.madeCut
-                    : reasonableScore
-                    ? true
-                    : player.madeCut,
-              };
-            })
-          );
+             const liveScore = Number(live.score);
+             const reasonableScore =
+               Number.isFinite(liveScore) &&
+               liveScore >= -20 &&
+               liveScore <= 20;
 
+             return {
+               ...player,
+               score: reasonableScore ? liveScore : player.score,
+               madeCut: reasonableScore ? true : player.madeCut,
+             };
+           })
+         );
+          
           setLastUpdated(data.fetchedAt || new Date().toISOString());
           setSyncStatus("Live scores synced");
         }
