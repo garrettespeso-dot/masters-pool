@@ -284,7 +284,8 @@ export default function App() {
                     <tr
                       key={entry.name}
                       style={{
-                        background: isLeader ? "#ecfdf5" : "white"
+                        background: isLeader ? "#d1fae5" : "white",
+                        borderLeft: isLeader ? "6px solid #f2c94c" : "none"
                       }}
                     >
                       <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
