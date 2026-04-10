@@ -1,4 +1,4 @@
-const SCORES_CSV_URL = "https:docs.google.com/spreadsheets/d/e/2PACX-1vTPyE3LzoKrkl6eJr-hoEHoVlOCPcLXe7lmuMvK1o9mjuvziDJ8f8X_W6-2NyxCR8J1zN2lTB64qF/pub?output=csv";
+const SCORES_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTPyE3LzoKrkl6eJr-hoEHoVl0CPcLXe7lmuMvK1o9mjuvziDJ8f8X_8-W6-2NyxCR8J1zN2lTB64qF/pub?gid=0&single=true&output=csv";
 
 function normalizeName(name) {
   return String(name || "")
