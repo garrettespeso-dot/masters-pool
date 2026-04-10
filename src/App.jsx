@@ -288,9 +288,6 @@ export default function App() {
                         borderLeft: isLeader ? "6px solid #f2c94c" : "none"
                       }}
                     >
-                      <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
-                        #{idx + 1}
-                      </td>
                       <td
                         style={{
                           padding: 14,
@@ -306,6 +303,7 @@ export default function App() {
                         {idx === 2 && <span style={{ fontSize: 18 }}>🥉</span>}
                         #{idx + 1}
                        </td>
+
                       <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
                         <span
                           style={{
