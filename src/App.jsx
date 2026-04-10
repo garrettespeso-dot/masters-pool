@@ -45,6 +45,14 @@ const DEFAULT_PARTICIPANTS = [
   }
 ];
 
+function normalizeName(name) {
+  return String(name || "")
+    .replace(/\(a\)/gi, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
 function normalizePoolName(name) {
   return String(name || "")
     .replace(/\s+/g, " ")
@@ -73,14 +81,6 @@ const DEFAULT_PLAYERS = Array.from(
   ).values()
 );
 
-function normalizeName(name) {
-  return String(name || "")
-    .replace(/\(a\)/gi, "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase();
-}
-
 function flattenPicks(picks) {
   return BUCKETS.flatMap((bucket) => picks[bucket] || []);
 }
@@ -88,7 +88,7 @@ function flattenPicks(picks) {
 function computeEntry(entry, players) {
   const playerMap = Object.fromEntries(players.map((p) => [p.name, p]));
   const selected = flattenPicks(entry.picks)
-    .map((name) => playerMap[name])
+    .map((name) => playerMap[normalizePoolName(name)])
     .filter(Boolean);
 
   const madeCutPlayers = selected.filter((p) => p.madeCut);
@@ -107,6 +107,16 @@ function computeEntry(entry, players) {
     total,
     tiebreak,
     out: madeCutPlayers.length < 5
+  };
+}
+
+function cardStyle() {
+  return {
+    background: "#ffffff",
+    borderRadius: 16,
+    padding: 20,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
+    border: "1px solid #e5e7eb"
   };
 }
 
@@ -185,46 +195,189 @@ export default function App() {
     );
   };
 
+  const leaderName = leaderboard.find((p) => !p.out)?.name || "";
+
   return (
-    <div style={{ padding: 20, fontFamily: "Arial, sans-serif", maxWidth: 1000 }}>
-      <h1>Masters Pool</h1>
-
-      <div style={{ marginBottom: 16, padding: 12, background: "#f4f4f4", borderRadius: 8 }}>
-        <div><strong>Status:</strong> {syncStatus}</div>
-        <div><strong>Last updated:</strong> {lastUpdated || "—"}</div>
-      </div>
-
-      <h2>Leaderboard</h2>
-      <div style={{ marginBottom: 24 }}>
-        {leaderboard.map((p, idx) => (
-          <div key={p.name} style={{ marginBottom: 8 }}>
-            #{idx + 1} {p.name} — {p.out ? "OUT" : p.total ?? "Need 5 made cuts"}
-            {"  "}
-            {!p.out && p.tiebreak != null ? `(6th: ${p.tiebreak})` : ""}
+    <div
+      style={{
+        background: "#f3f4f6",
+        minHeight: "100vh",
+        padding: 20,
+        fontFamily: "Arial, sans-serif",
+        color: "#111827"
+      }}
+    >
+      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ marginBottom: 20 }}>
+          <h1 style={{ fontSize: 48, margin: "0 0 10px 0", fontWeight: 800 }}>
+            Masters Pool
+          </h1>
+          <div
+            style={{
+              ...cardStyle(),
+              background: "#111827",
+              color: "white"
+            }}
+          >
+            <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
+              Live Status
+            </div>
+            <div style={{ marginBottom: 6 }}>
+              <strong>Status:</strong> {syncStatus}
+            </div>
+            <div>
+              <strong>Last updated:</strong> {lastUpdated || "—"}
+            </div>
           </div>
-        ))}
-      </div>
-
-      <h2>Scores</h2>
-      {players.map((p) => (
-        <div key={p.name} style={{ marginBottom: 8 }}>
-          <span style={{ display: "inline-block", width: 180 }}>{p.name}</span>
-          <input
-            type="number"
-            value={p.score}
-            onChange={(e) => updatePlayer(p.name, "score", Number(e.target.value || 0))}
-            style={{ width: 70, marginRight: 12 }}
-          />
-          <label>
-            <input
-              type="checkbox"
-              checked={p.madeCut}
-              onChange={(e) => updatePlayer(p.name, "madeCut", e.target.checked)}
-            />{" "}
-            Made cut
-          </label>
         </div>
-      ))}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 16,
+            marginBottom: 24
+          }}
+        >
+          <div style={cardStyle()}>
+            <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 6 }}>Leader</div>
+            <div style={{ fontSize: 28, fontWeight: 800 }}>{leaderName || "—"}</div>
+          </div>
+
+          <div style={cardStyle()}>
+            <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 6 }}>Entries</div>
+            <div style={{ fontSize: 28, fontWeight: 800 }}>{leaderboard.length}</div>
+          </div>
+
+          <div style={cardStyle()}>
+            <div style={{ fontSize: 14, color: "#6b7280", marginBottom: 6 }}>Golfers Tracked</div>
+            <div style={{ fontSize: 28, fontWeight: 800 }}>{players.length}</div>
+          </div>
+        </div>
+
+        <div style={{ ...cardStyle(), marginBottom: 24 }}>
+          <h2 style={{ marginTop: 0, fontSize: 34 }}>Leaderboard</h2>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#f9fafb" }}>
+                  {["Rank", "Participant", "Status", "Made Cut", "Best 5 Total", "6th Score"].map((header) => (
+                    <th
+                      key={header}
+                      style={{
+                        textAlign: "left",
+                        padding: 14,
+                        borderBottom: "1px solid #e5e7eb",
+                        fontSize: 14,
+                        color: "#6b7280"
+                      }}
+                    >
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.map((entry, idx) => {
+                  const isLeader = idx === 0 && !entry.out;
+                  return (
+                    <tr
+                      key={entry.name}
+                      style={{
+                        background: isLeader ? "#ecfdf5" : "white"
+                      }}
+                    >
+                      <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
+                        #{idx + 1}
+                      </td>
+                      <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
+                        {entry.name}
+                      </td>
+                      <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
+                        <span
+                          style={{
+                            display: "inline-block",
+                            padding: "6px 10px",
+                            borderRadius: 999,
+                            fontSize: 12,
+                            fontWeight: 700,
+                            background: entry.out ? "#fee2e2" : "#dcfce7",
+                            color: entry.out ? "#991b1b" : "#166534"
+                          }}
+                        >
+                          {entry.out ? "OUT" : "ACTIVE"}
+                        </span>
+                      </td>
+                      <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
+                        {entry.madeCutCount}
+                      </td>
+                      <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
+                        {entry.total ?? "—"}
+                      </td>
+                      <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
+                        {entry.tiebreak ?? "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style={cardStyle()}>
+          <h2 style={{ marginTop: 0, fontSize: 34 }}>Scores</h2>
+          <div
+            style={{
+              display: "grid",
+              gap: 12
+            }}
+          >
+            {players.map((p) => (
+              <div
+                key={p.name}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "minmax(180px, 1fr) 90px 120px",
+                  gap: 12,
+                  alignItems: "center",
+                  padding: 12,
+                  border: "1px solid #e5e7eb",
+                  borderRadius: 12,
+                  background: "#f9fafb"
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 700 }}>{p.name}</div>
+                  <div style={{ fontSize: 13, color: "#6b7280" }}>{p.bucket}</div>
+                </div>
+
+                <input
+                  type="number"
+                  value={p.score}
+                  onChange={(e) => updatePlayer(p.name, "score", Number(e.target.value || 0))}
+                  style={{
+                    width: "100%",
+                    padding: 8,
+                    borderRadius: 8,
+                    border: "1px solid #d1d5db",
+                    fontSize: 16
+                  }}
+                />
+
+                <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+                  <input
+                    type="checkbox"
+                    checked={p.madeCut}
+                    onChange={(e) => updatePlayer(p.name, "madeCut", e.target.checked)}
+                  />
+                  Made cut
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
