@@ -129,13 +129,8 @@ export default function App() {
         return {
           ...player,
           score: reasonableScore ? live.score : player.score,
-          madeCut:
-            typeof live.madeCut === "boolean"
-              ? live.madeCut
-              : reasonableScore
-                ? true
-                : player.madeCut
-              };
+          madeCut: reasonableScore ? true : player.madeCut
+         };
             })
           );
 
