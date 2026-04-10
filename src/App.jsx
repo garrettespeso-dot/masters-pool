@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 const BUCKETS = ["Bucket 1", "Bucket 2", "Bucket 3", "Bucket 4", "Bucket 5"];
 
@@ -27,6 +27,14 @@ const DEFAULT_PLAYERS = [
   { name: "Dustin Johnson", bucket: "Bucket 5", score: 0, madeCut: false },
   { name: "Cameron Smith", bucket: "Bucket 5", score: 0, madeCut: false }
 ];
+
+function normalizeName(name) {
+  return String(name || "")
+    .replace(/\(a\)/gi, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
 
 function flattenPicks(picks) {
   return BUCKETS.flatMap((bucket) => picks[bucket] || []);
@@ -60,12 +68,71 @@ function computeEntry(entry, players) {
 export default function App() {
   const [players, setPlayers] = useState(DEFAULT_PLAYERS);
   const [participants] = useState(DEFAULT_PARTICIPANTS);
+  const [syncStatus, setSyncStatus] = useState("Waiting for first live update...");
+  const [lastUpdated, setLastUpdated] = useState("");
 
   const leaderboard = useMemo(() => {
     return participants
       .map((p) => computeEntry(p, players))
-      .sort((a, b) => (a.total ?? 9999) - (b.total ?? 9999));
+      .sort((a, b) => {
+        const aOut = a.out ? 1 : 0;
+        const bOut = b.out ? 1 : 0;
+        if (aOut !== bOut) return aOut - bOut;
+        if ((a.total ?? 9999) !== (b.total ?? 9999)) return (a.total ?? 9999) - (b.total ?? 9999);
+        return (a.tiebreak ?? 9999) - (b.tiebreak ?? 9999);
+      });
   }, [participants, players]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLiveScores() {
+      try {
+        setSyncStatus("Refreshing live scores...");
+        const res = await fetch("/api/leaderboard");
+        const data = await res.json();
+
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || "Live score request failed");
+        }
+
+        const liveMap = new Map();
+        for (const row of data.players || []) {
+          liveMap.set(normalizeName(row.name), row);
+        }
+
+        if (!cancelled) {
+          setPlayers((current) =>
+            current.map((player) => {
+              const live = liveMap.get(normalizeName(player.name));
+              if (!live) return player;
+
+              return {
+                ...player,
+                score: typeof live.score === "number" ? live.score : player.score,
+                madeCut: typeof live.madeCut === "boolean" ? live.madeCut : player.madeCut
+              };
+            })
+          );
+
+          setLastUpdated(data.fetchedAt || new Date().toISOString());
+          setSyncStatus("Live scores synced");
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setSyncStatus(`Live sync failed: ${err.message}`);
+        }
+      }
+    }
+
+    loadLiveScores();
+    const id = setInterval(loadLiveScores, 60000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
 
   const updatePlayer = (name, field, value) => {
     setPlayers((prev) =>
@@ -74,17 +141,26 @@ export default function App() {
   };
 
   return (
-    <div style={{ padding: 20, fontFamily: "Arial, sans-serif" }}>
+    <div style={{ padding: 20, fontFamily: "Arial, sans-serif", maxWidth: 1000 }}>
       <h1>Masters Pool</h1>
 
-      <h2>Leaderboard</h2>
-      {leaderboard.map((p) => (
-        <div key={p.name} style={{ marginBottom: 8 }}>
-          {p.name} — {p.out ? "OUT" : p.total ?? "Need 5 made cuts"}
-        </div>
-      ))}
+      <div style={{ marginBottom: 16, padding: 12, background: "#f4f4f4", borderRadius: 8 }}>
+        <div><strong>Status:</strong> {syncStatus}</div>
+        <div><strong>Last updated:</strong> {lastUpdated || "—"}</div>
+      </div>
 
-      <h2 style={{ marginTop: 24 }}>Scores</h2>
+      <h2>Leaderboard</h2>
+      <div style={{ marginBottom: 24 }}>
+        {leaderboard.map((p, idx) => (
+          <div key={p.name} style={{ marginBottom: 8 }}>
+            #{idx + 1} {p.name} — {p.out ? "OUT" : p.total ?? "Need 5 made cuts"}
+            {"  "}
+            {!p.out && p.tiebreak != null ? `(6th: ${p.tiebreak})` : ""}
+          </div>
+        ))}
+      </div>
+
+      <h2>Scores</h2>
       {players.map((p) => (
         <div key={p.name} style={{ marginBottom: 8 }}>
           <span style={{ display: "inline-block", width: 180 }}>{p.name}</span>
