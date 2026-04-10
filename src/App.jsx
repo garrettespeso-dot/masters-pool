@@ -45,18 +45,33 @@ const DEFAULT_PARTICIPANTS = [
   }
 ];
 
-const DEFAULT_PLAYERS = [
-  { name: "Scottie Scheffler", bucket: "Bucket 1", score: 0, madeCut: false },
-  { name: "Xander Schauffele", bucket: "Bucket 1", score: 0, madeCut: false },
-  { name: "Hideki Matsuyama", bucket: "Bucket 2", score: 0, madeCut: false },
-  { name: "Justin Rose", bucket: "Bucket 2", score: 0, madeCut: false },
-  { name: "Adam Scott", bucket: "Bucket 3", score: 0, madeCut: false },
-  { name: "Corey Conners", bucket: "Bucket 3", score: 0, madeCut: false },
-  { name: "Brooks Koepka", bucket: "Bucket 4", score: 0, madeCut: false },
-  { name: "Jordan Spieth", bucket: "Bucket 4", score: 0, madeCut: false },
-  { name: "Dustin Johnson", bucket: "Bucket 5", score: 0, madeCut: false },
-  { name: "Cameron Smith", bucket: "Bucket 5", score: 0, madeCut: false }
-];
+function normalizePoolName(name) {
+  return String(name || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace("Jordon Spieth", "Jordan Spieth")
+    .replace("Sungae IM", "Sungjae Im")
+    .replace("Ludvig Åberg", "Ludvig Aberg")
+    .replace("Nicolai Højgaard", "Nicolai Hojgaard");
+}
+
+const DEFAULT_PLAYERS = Array.from(
+  new Map(
+    DEFAULT_PARTICIPANTS.flatMap((entry) =>
+      BUCKETS.flatMap((bucket) =>
+        (entry.picks[bucket] || []).map((name) => [
+          normalizePoolName(name),
+          {
+            name: normalizePoolName(name),
+            bucket,
+            score: 0,
+            madeCut: false
+          }
+        ])
+      )
+    )
+  ).values()
+);
 
 function normalizeName(name) {
   return String(name || "")
