@@ -220,153 +220,131 @@ export default function App() {
         </div>
 
         <div style={{ ...cardStyle(), marginBottom: 24 }}>
-          <h2 style={{ marginTop: 0, fontSize: 34 }}>Leaderboard</h2>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ background: "#f9fafb" }}>
-                  {["Rank", "Participant", "Status", "Made Cut", "Best 5 Total", "6th Score"].map((header) => (
-                    <th
-                      key={header}
-                      style={{
-                        textAlign: "left",
-                        padding: 14,
-                        borderBottom: "1px solid #e5e7eb",
-                        fontSize: 14,
-                        color: "#6b7280"
-                      }}
-                    >
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-  {leaderboard.map((entry, idx) => {
-    const isLeader = idx === 0 && !entry.out;
+  <h2 style={{ marginTop: 0, fontSize: 34 }}>Leaderboard</h2>
+  <div style={{ overflowX: "auto" }}>
+    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <thead>
+        <tr style={{ background: "#f9fafb" }}>
+          {[
+            "Rank",
+            "Participant",
+            "Status",
+            "Made Cut",
+            "Best 5 Total",
+            "6th Score",
+            "Counting Scores"
+          ].map((header) => (
+            <th
+              key={header}
+              style={{
+                textAlign: "left",
+                padding: 14,
+                borderBottom: "1px solid #e5e7eb",
+                fontSize: 14,
+                color: "#6b7280"
+              }}
+            >
+              {header}
+            </th>
+          ))}
+        </tr>
+      </thead>
 
-    return (
-      <tr
-        key={entry.name}
-        style={{
-          background: isLeader ? "#d1fae5" : "white",
-          borderLeft: isLeader ? "6px solid #f2c94c" : "none"
-        }}
-      >
-     <td
-       style={{
-         padding: 14,
-         borderBottom: "1px solid #e5e7eb",
-         fontWeight: 700,
-         verticalAlign: "middle"
-       }}
-     >
-       <div
-         style={{
-         display: "flex",
-         alignItems: "center",
-         gap: 8
-       }}
-     >
-       {idx === 0 && <span style={{ fontSize: 18 }}>🥇</span>}
-       {idx === 1 && <span style={{ fontSize: 18 }}>🥈</span>}
-       {idx === 2 && <span style={{ fontSize: 18 }}>🥉</span>}
-       <span>#{idx + 1}</span>
-     </div>
-   </td>
+      <tbody>
+        {leaderboard.map((entry, idx) => {
+          const isLeader = idx === 0 && !entry.out;
 
-        <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
-          {entry.name}
-        </td>
-
-        <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
-          <span
-            style={{
-              display: "inline-block",
-              padding: "6px 10px",
-              borderRadius: 999,
-              fontSize: 12,
-              fontWeight: 700,
-              background: entry.out ? "#fdecea" : "#d1fae5",
-              color: entry.out ? "#b91c1c" : "#0b3d2e"
-            }}
-          >
-            {entry.out ? "OUT" : "ACTIVE"}
-          </span>
-        </td>
-
-        <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
-          {entry.madeCutCount}
-        </td>
-
-        <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb", fontWeight: 700 }}>
-          {entry.total ?? "—"}
-        </td>
-
-        <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
-          {entry.tiebreak ?? "—"}
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
-            </table>
-          </div>
-        </div>
-
-        <div style={cardStyle()}>
-          <h2 style={{ marginTop: 0, fontSize: 34 }}>Scores</h2>
-          <div
-            style={{
-              display: "grid",
-              gap: 12
-            }}
-          >
-            {players.map((p) => (
-              <div
-                key={p.name}
+          return (
+            <tr
+              key={entry.name}
+              style={{
+                background: isLeader ? "#d1fae5" : "white",
+                borderLeft: isLeader ? "6px solid #f2c94c" : "none"
+              }}
+            >
+              <td
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "minmax(180px, 1fr) 90px 120px",
-                  gap: 12,
-                  alignItems: "center",
-                  padding: 12,
-                  border: "1px solid #e5e7eb",
-                  borderRadius: 12,
-                  background: "#f9fafb"
+                  padding: 14,
+                  borderBottom: "1px solid #e5e7eb",
+                  fontWeight: 700,
+                  verticalAlign: "middle"
                 }}
               >
-                <div>
-                  <div style={{ fontWeight: 700 }}>{p.name}</div>
-                  <div style={{ fontSize: 13, color: "#6b7280" }}>{p.bucket}</div>
-                </div>
-
-                <input
-                  type="number"
-                  value={p.score}
-                  onChange={(e) => updatePlayer(p.name, "score", Number(e.target.value || 0))}
+                <div
                   style={{
-                    width: "100%",
-                    padding: 8,
-                    borderRadius: 8,
-                    border: "1px solid #d1d5db",
-                    fontSize: 16
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8
                   }}
-                />
+                >
+                  {idx === 0 && <span style={{ fontSize: 18 }}>🥇</span>}
+                  {idx === 1 && <span style={{ fontSize: 18 }}>🥈</span>}
+                  {idx === 2 && <span style={{ fontSize: 18 }}>🥉</span>}
+                  <span>#{idx + 1}</span>
+                </div>
+              </td>
 
-                <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
-                  <input
-                    type="checkbox"
-                    checked={p.madeCut}
-                    onChange={(e) => updatePlayer(p.name, "madeCut", e.target.checked)}
-                  />
-                  Made cut
-                </label>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
+              <td
+                style={{
+                  padding: 14,
+                  borderBottom: "1px solid #e5e7eb",
+                  fontWeight: 700
+                }}
+              >
+                {isLeader && <span style={{ marginRight: 6 }}>👑</span>}
+                {entry.name}
+              </td>
+
+              <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
+                <span
+                  style={{
+                    display: "inline-block",
+                    padding: "6px 10px",
+                    borderRadius: 999,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    background: entry.out ? "#fdecea" : "#d1fae5",
+                    color: entry.out ? "#b91c1c" : "#0b3d2e"
+                  }}
+                >
+                  {entry.out ? "OUT" : "ACTIVE"}
+                </span>
+              </td>
+
+              <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
+                {entry.madeCutCount}
+              </td>
+
+              <td
+                style={{
+                  padding: 14,
+                  borderBottom: "1px solid #e5e7eb",
+                  fontWeight: 700
+                }}
+              >
+                {entry.total ?? "—"}
+              </td>
+
+              <td style={{ padding: 14, borderBottom: "1px solid #e5e7eb" }}>
+                {entry.tiebreak ?? "—"}
+              </td>
+
+              <td
+                style={{
+                  padding: 14,
+                  borderBottom: "1px solid #e5e7eb",
+                  color: "#374151",
+                  fontSize: 14
+                }}
+              >
+                {entry.countedScores?.join(", ") || "—"}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+</div>
   );
 }
